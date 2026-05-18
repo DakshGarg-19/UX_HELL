@@ -12,11 +12,18 @@ import Screen1 from './components/Screen1';
 import Screen2 from './components/Screen2';
 import Screen3 from './components/Screen3';
 import Screen4 from './components/Screen4';
+import FakeRazorpay from './components/FakeRazorpay';
+import SchemeBanner from './components/SchemeBanner';
+import ClerkGauntlet from './components/ClerkGauntlet';
 
 export default function App() {
   // ===== NAVIGATION =====
   const [currentStep, setCurrentStep] = useState(0);
   const [resetCount, setResetCount] = useState(0);
+
+  // ===== CLERK GAUNTLET =====
+  const [clerkStep, setClerkStep] = useState(0);
+  const [clerkAnswers, setClerkAnswers] = useState({});
 
   // ===== FORM DATA =====
   const [fullName, setFullName] = useState('');
@@ -46,18 +53,15 @@ export default function App() {
   // ===== GLOBAL MECHANICS =====
   const [complainContext, setComplainContext] = useState('general');
   const [complainShaking, setComplainShaking] = useState(false);
-  const [lunchBreakActive, setLunchBreakActive] = useState(false);
   const [showBribeToast, setShowBribeToast] = useState(false);
   const [showFakeLoader, setShowFakeLoader] = useState(false);
+  const [showFakeRazorpay, setShowFakeRazorpay] = useState(false);
 
   // ===== MODAL STATE =====
   const [navModalOpen, setNavModalOpen] = useState(false);
   const [complainModalOpen, setComplainModalOpen] = useState(false);
   const [sirPleaseModal, setSirPleaseModal] = useState(false);
   const [twoFatherFlash, setTwoFatherFlash] = useState(false);
-
-  // ===== LUNCH BREAK =====
-  const [lunchCountdown, setLunchCountdown] = useState(10);
 
   // ===== COMPUTED =====
   const appId = useMemo(() =>
@@ -83,38 +87,6 @@ export default function App() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // ===== LUNCH BREAK SCHEDULER =====
-  useEffect(() => {
-    let timeoutId = null;
-
-    const scheduleLunchBreak = () => {
-      const delay = (Math.random() * 15000) + 30000; // 30-45 seconds
-      timeoutId = setTimeout(() => {
-        if (currentStepRef.current === 4) {
-          scheduleLunchBreak();
-          return;
-        }
-        setLunchBreakActive(true);
-        setLunchCountdown(10);
-        scheduleLunchBreak();
-      }, delay);
-    };
-
-    scheduleLunchBreak();
-    return () => { if (timeoutId) clearTimeout(timeoutId); };
-  }, []);
-
-  // ===== LUNCH BREAK COUNTDOWN =====
-  useEffect(() => {
-    if (!lunchBreakActive) return;
-    if (lunchCountdown <= 0) {
-      setLunchBreakActive(false);
-      return;
-    }
-    const timer = setTimeout(() => setLunchCountdown(prev => prev - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [lunchBreakActive, lunchCountdown]);
-
   // ===== COMPLAIN BUTTON SHAKE =====
   useEffect(() => {
     if (complainShaking && complainBtnRef.current) {
@@ -130,16 +102,24 @@ export default function App() {
 
   // ===== SET COMPLAIN CONTEXT ON STEP CHANGE =====
   useEffect(() => {
+    if (clerkStep > 0) {
+      if (clerkStep === 3) setComplainContext('bribe');
+      else setComplainContext('general');
+      return;
+    }
     if (currentStep === 0) setComplainContext('general');
     if (currentStep === 1) setComplainContext('gender');
     if (currentStep === 2) setComplainContext('general');
     if (currentStep === 3) setComplainContext('bribe');
     if (currentStep === 4) setComplainContext('general');
-  }, [currentStep]);
+  }, [currentStep, clerkStep]);
 
   // ===== RESET ALL STATE =====
   const handleReset = () => {
     setCurrentStep(0);
+    setClerkStep(0);
+    setClerkAnswers({});
+    setShowFakeRazorpay(false);
     setFullName('');
     setGender(null);
     setFatherName('');
@@ -161,7 +141,6 @@ export default function App() {
     setGenderPrankCount(0);
     setComplainContext('general');
     setComplainShaking(false);
-    setLunchBreakActive(false);
     setShowBribeToast(false);
     setShowFakeLoader(false);
     setResetCount(prev => prev + 1);
@@ -233,7 +212,33 @@ export default function App() {
             { label: 'I want compensation 💀', action: () => setComplainModalOpen(false) }
           ]
         };
-      case 'bribe':
+      case 'bribe': {
+        const buttons = [
+          { label: 'Main 2154 tak wait karunga 😮‍💨', action: () => setComplainModalOpen(false) },
+          {
+            label: "Please sir it's urgent! 🙏", action: () => {
+              setComplainModalOpen(false);
+              setSirPleaseModal(true);
+              setTimeout(() => setSirPleaseModal(false), 5000);
+            }
+          },
+          {
+            label: 'TU JAANTA NAHI MERA BAAP KAUN HAI 😤', action: () => {
+              setComplainModalOpen(false);
+              if (clerkStep === 3) {
+                setClerkStep(0);
+              }
+              setCurrentStep(4);
+            }
+          }
+        ];
+        // 4th option when on clerk screen 3
+        if (clerkStep === 3) {
+          buttons.push({
+            label: "I'll just pay and get this over with 💸",
+            action: () => { setComplainModalOpen(false); setShowFakeRazorpay(true); }
+          });
+        }
         return {
           title: '📢 Ghoos / Bribe Shikayat',
           body: (
@@ -241,29 +246,98 @@ export default function App() {
               <p>Being asked for ₹50,000 gift — "Aapko kya karna hai?"</p>
             </div>
           ),
-          buttons: [
-            { label: 'Main 2154 tak wait karunga 😮‍💨', action: () => setComplainModalOpen(false) },
-            {
-              label: "Please sir it's urgent! 🙏", action: () => {
-                setComplainModalOpen(false);
-                setSirPleaseModal(true);
-                setTimeout(() => setSirPleaseModal(false), 5000);
-              }
-            },
-            {
-              label: 'TU JAANTA NAHI MERA BAAP KAUN HAI 😤', action: () => {
-                setComplainModalOpen(false);
-                setCurrentStep(4);
-              }
-            }
-          ]
+          buttons
         };
+      }
       default:
         return { title: '📢 शिकायत', body: <p>No complaint context.</p>, buttons: [{ label: 'OK', action: () => setComplainModalOpen(false) }] };
     }
   };
 
   const complainContent = getComplainContent();
+
+  // ===== RENDER CONTENT =====
+  const renderContent = () => {
+    if (clerkStep > 0) {
+      return (
+        <ClerkGauntlet
+          clerkStep={clerkStep} setClerkStep={setClerkStep}
+          clerkAnswers={clerkAnswers} setClerkAnswers={setClerkAnswers}
+          fullName={fullName} setCurrentStep={setCurrentStep}
+          setShowFakeRazorpay={setShowFakeRazorpay}
+          setComplainShaking={setComplainShaking}
+          setComplainContext={setComplainContext}
+          setShowBribeToast={setShowBribeToast}
+        />
+      );
+    }
+
+    switch (currentStep) {
+      case 0: return <Screen0 setCurrentStep={setCurrentStep} />;
+      case 1: return (
+        <Screen1
+          fullName={fullName} setFullName={setFullName}
+          gender={gender} setGender={setGender}
+          fatherName={fatherName} setFatherName={setFatherName}
+          motherName={motherName} setMotherName={setMotherName}
+          motherLabel={motherLabel} setMotherLabel={setMotherLabel}
+          motherLabelChanged={motherLabelChanged} setMotherLabelChanged={setMotherLabelChanged}
+          genderPrankCount={genderPrankCount} setGenderPrankCount={setGenderPrankCount}
+          captchaAttempts={captchaAttempts} setCaptchaAttempts={setCaptchaAttempts}
+          hasWiped={hasWiped} setHasWiped={setHasWiped}
+          setCurrentStep={setCurrentStep}
+          setComplainContext={setComplainContext}
+          mobileNumber={mobileNumber} setMobileNumber={setMobileNumber}
+          refNumber={refNumber} setRefNumber={setRefNumber}
+          dobDay={dobDay} setDobDay={setDobDay}
+          dobMonth={dobMonth} setDobMonth={setDobMonth}
+          dobYear={dobYear} setDobYear={setDobYear}
+          resetCount={resetCount}
+        />
+      );
+      case 2: return (
+        <Screen2
+          pinPlaced={pinPlaced} setPinPlaced={setPinPlaced}
+          pinX={pinX} setPinX={setPinX}
+          pinY={pinY} setPinY={setPinY}
+          selectedState={selectedState} setSelectedState={setSelectedState}
+          selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress}
+          setCurrentStep={setCurrentStep}
+          setClerkStep={setClerkStep}
+        />
+      );
+      case 3: return (
+        <Screen3
+          appId={appId} fullName={fullName} selectedState={selectedState}
+          setCurrentStep={setCurrentStep}
+          setComplainShaking={setComplainShaking}
+          setComplainContext={setComplainContext}
+          setShowBribeToast={setShowBribeToast}
+          setShowFakeLoader={setShowFakeLoader}
+          showFakeLoader={showFakeLoader}
+          setShowFakeRazorpay={setShowFakeRazorpay}
+        />
+      );
+      case 4: return (
+        <Screen4
+          fullName={fullName} fatherName={fatherName}
+          selectedAddress={selectedAddress} onReset={handleReset}
+        />
+      );
+      default: return <Screen0 setCurrentStep={setCurrentStep} />;
+    }
+  };
+
+  // Determine FakeRazorpay props based on context
+  const razorpayProps = clerkStep === 3 ? {
+    amount: "₹50,000",
+    recipientName: "D.K. Sharma (Personal)",
+    description: "Vishesh Sahayata Shulk — Room 3B Processing",
+  } : {
+    amount: "₹50,000",
+    recipientName: "Dept. of Bureaucracy & Chai",
+    description: "Tatkal Sahayata Rashi (Gift) — Bilkul bribe nahi hai 😇",
+  };
 
   return (
     <div style={{ cursor: 'none', minHeight: '100vh', background: '#f5f0e8' }}>
@@ -282,58 +356,14 @@ export default function App() {
       {/* Ticker */}
       <Ticker />
 
+      {/* Scheme Banner (replaces lunch break scheduler) */}
+      <SchemeBanner currentStep={currentStep} />
+
       {/* 3-Column Layout */}
       <div style={{ display: 'flex', minHeight: 'calc(100vh - 200px)' }}>
         <LeftSidebar />
         <div style={{ flex: 1, borderLeft: '1px solid #ccc', borderRight: '1px solid #ccc', background: '#fff', minWidth: 0 }}>
-          {currentStep === 0 && <Screen0 setCurrentStep={setCurrentStep} />}
-          {currentStep === 1 && (
-            <Screen1
-              fullName={fullName} setFullName={setFullName}
-              gender={gender} setGender={setGender}
-              fatherName={fatherName} setFatherName={setFatherName}
-              motherName={motherName} setMotherName={setMotherName}
-              motherLabel={motherLabel} setMotherLabel={setMotherLabel}
-              motherLabelChanged={motherLabelChanged} setMotherLabelChanged={setMotherLabelChanged}
-              genderPrankCount={genderPrankCount} setGenderPrankCount={setGenderPrankCount}
-              captchaAttempts={captchaAttempts} setCaptchaAttempts={setCaptchaAttempts}
-              hasWiped={hasWiped} setHasWiped={setHasWiped}
-              setCurrentStep={setCurrentStep}
-              setComplainContext={setComplainContext}
-              mobileNumber={mobileNumber} setMobileNumber={setMobileNumber}
-              refNumber={refNumber} setRefNumber={setRefNumber}
-              dobDay={dobDay} setDobDay={setDobDay}
-              dobMonth={dobMonth} setDobMonth={setDobMonth}
-              dobYear={dobYear} setDobYear={setDobYear}
-            />
-          )}
-          {currentStep === 2 && (
-            <Screen2
-              pinPlaced={pinPlaced} setPinPlaced={setPinPlaced}
-              pinX={pinX} setPinX={setPinX}
-              pinY={pinY} setPinY={setPinY}
-              selectedState={selectedState} setSelectedState={setSelectedState}
-              selectedAddress={selectedAddress} setSelectedAddress={setSelectedAddress}
-              setCurrentStep={setCurrentStep}
-            />
-          )}
-          {currentStep === 3 && (
-            <Screen3
-              appId={appId} fullName={fullName} selectedState={selectedState}
-              setCurrentStep={setCurrentStep}
-              setComplainShaking={setComplainShaking}
-              setComplainContext={setComplainContext}
-              setShowBribeToast={setShowBribeToast}
-              setShowFakeLoader={setShowFakeLoader}
-              showFakeLoader={showFakeLoader}
-            />
-          )}
-          {currentStep === 4 && (
-            <Screen4
-              fullName={fullName} fatherName={fatherName}
-              selectedAddress={selectedAddress} onReset={handleReset}
-            />
-          )}
+          {renderContent()}
         </div>
         <RightSidebar />
       </div>
@@ -419,29 +449,28 @@ export default function App() {
         </div>
       )}
 
-      {/* Lunch Break Overlay */}
-      {lunchBreakActive && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 9998,
-          background: 'rgba(0,0,0,0.92)',
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center'
-        }}>
-          <div style={{ fontSize: 80 }}>😴</div>
-          <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold', marginTop: 16 }}>
-            सर्वर अचानक बंद हो गया
-          </div>
-          <div style={{ color: '#aaa', fontSize: 14, fontStyle: 'italic', marginTop: 4 }}>
-            (Server Achanak Band Ho Gaya — Server suddenly crashed)
-          </div>
-          <div style={{ color: 'white', fontSize: 18, marginTop: 16 }}>
-            Lunch Break in Progress. System will resume automatically.
-          </div>
-          <div style={{ color: '#ffcc00', fontSize: 24, fontWeight: 'bold', marginTop: 16 }}>
-            Resuming in: {lunchCountdown}...
-          </div>
-        </div>
-      )}
+      {/* Fake Razorpay Modal */}
+      <FakeRazorpay
+        isOpen={showFakeRazorpay}
+        amount={razorpayProps.amount}
+        recipientName={razorpayProps.recipientName}
+        description={razorpayProps.description}
+        prefillName={fullName}
+        onSuccess={() => {
+          setShowFakeRazorpay(false);
+          if (clerkStep === 3) {
+            setClerkStep(0);
+          }
+          setCurrentStep(4);
+        }}
+        onDismiss={() => {
+          setShowFakeRazorpay(false);
+          setComplainShaking(true);
+          setComplainContext('bribe');
+          setShowBribeToast(true);
+          setTimeout(() => setComplainShaking(false), 2000);
+        }}
+      />
 
       {/* Fake Loader (from Screen 3) */}
       {showFakeLoader && (

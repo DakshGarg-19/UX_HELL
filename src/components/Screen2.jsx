@@ -1,8 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
 
-const MAP_FALLBACK = 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/India_outline_map.svg/600px-India_outline_map.svg.png';
-
 function getStateAndAddress(X, Y) {
   if (Y < 25 && X >= 20 && X <= 60) return { state: "Jammu & Kashmir", address: "Vill. Doodpathri, Near Frozen River, Tehsil Budgam, Pin: 193401, J&K" };
   if (Y < 25 && X > 60) return { state: "Arunachal Pradesh", address: "House No. Unknown, Tawang Hills, Near Chinese Border Marker 47, Pin: 790001, AR" };
@@ -23,7 +21,7 @@ export default function Screen2({
   pinY, setPinY,
   selectedState, setSelectedState,
   selectedAddress, setSelectedAddress,
-  setCurrentStep
+  setCurrentStep, setClerkStep
 }) {
   const pinRef = useRef(null);
   const mapRef = useRef(null);
@@ -74,7 +72,7 @@ export default function Screen2({
           onClick={handleMapClick}
           style={{
             width: '100%', height: 420,
-            backgroundImage: `url('/maps/india.png'), url('${MAP_FALLBACK}')`,
+            backgroundImage: "url('/maps/india.png')",
             backgroundSize: 'contain', backgroundRepeat: 'no-repeat',
             backgroundPosition: 'center',
             border: '3px solid #003366',
@@ -84,7 +82,6 @@ export default function Screen2({
         >
           <img
             src="/maps/india.png"
-            onError={(e) => { e.target.src = MAP_FALLBACK; }}
             alt="India Map"
             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           />
@@ -118,7 +115,7 @@ export default function Screen2({
             </div>
 
             <button className="govt-btn" style={{ width: '100%', fontSize: 16 }}
-              onClick={() => setCurrentStep(3)}>
+              onClick={() => setClerkStep(1)}>
               CONFIRM THIS ADDRESS → (Pata Confirm Karen)
             </button>
           </div>

@@ -1,50 +1,48 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import { gsap } from "gsap";
 import FallbackImage from "./FallbackImage";
 import Modal from "./Modal";
 
-const CAPTCHA_DISPLAYS = ["B3Ql9X", "R7mK2P", "X9nW4Q", "G2vL8Z", "K5jH3Y"];
-const NOISE_ANGLES = [-12, 5, -3, 8, -7];
+const NOISE_ANGLES = [-12, 5, -3, 8, -7, 15, -10];
 
 export default function Screen1({
-  fullName,
-  setFullName,
-  gender,
-  setGender,
-  fatherName,
-  setFatherName,
-  motherName,
-  setMotherName,
-  motherLabel,
-  setMotherLabel,
-  motherLabelChanged,
-  setMotherLabelChanged,
-  genderPrankCount,
-  setGenderPrankCount,
-  captchaAttempts,
-  setCaptchaAttempts,
-  hasWiped,
-  setHasWiped,
-  setCurrentStep,
-  setComplainContext,
-  mobileNumber,
-  setMobileNumber,
-  refNumber,
-  setRefNumber,
-  dobDay,
-  setDobDay,
-  dobMonth,
-  setDobMonth,
-  dobYear,
-  setDobYear,
+  fullName, setFullName,
+  gender, setGender,
+  fatherName, setFatherName,
+  motherName, setMotherName,
+  motherLabel, setMotherLabel,
+  motherLabelChanged, setMotherLabelChanged,
+  genderPrankCount, setGenderPrankCount,
+  captchaAttempts, setCaptchaAttempts,
+  hasWiped, setHasWiped,
+  setCurrentStep, setComplainContext,
+  mobileNumber, setMobileNumber,
+  refNumber, setRefNumber,
+  dobDay, setDobDay,
+  dobMonth, setDobMonth,
+  dobYear, setDobYear,
+  resetCount,
 }) {
-  const [captchaDisplayIdx, setCaptchaDisplayIdx] = useState(0);
   const [captchaInput, setCaptchaInput] = useState("");
   const [captchaError, setCaptchaError] = useState("");
+  const [captchaSuccess, setCaptchaSuccess] = useState("");
   const [mobileError, setMobileError] = useState("");
   const [showGenderModal, setShowGenderModal] = useState(false);
   const [showParentsModal, setShowParentsModal] = useState(false);
   const [showWipeOverlay, setShowWipeOverlay] = useState(false);
+
+  // Generate random CAPTCHA code per session/reset
+  const CAPTCHA_ANSWER = useMemo(() => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return Array.from({ length: 6 }, () =>
+      chars[Math.floor(Math.random() * chars.length)]).join('');
+  }, [resetCount]);
+
+  // Per-character random rotations (stable per render cycle)
+  const charRotations = useMemo(() =>
+    Array.from({ length: 6 }, () => Math.floor(Math.random() * 30) - 15),
+    [resetCount, captchaAttempts]
+  );
 
   const handleGenderChange = (val) => {
     setGender(val);
@@ -79,53 +77,110 @@ export default function Screen1({
   };
 
   const handleNext = () => {
-    // STEP A: First 3 CAPTCHA attempts always fail
-    if (captchaAttempts < 3) {
+    setCaptchaSuccess("");
+
+    // CAPTCHA ATTEMPT 1: Always wrong
+    if (captchaAttempts === 0) {
       setCaptchaError(
-        `Arre bhai! CAPTCHA galat hai! Dobara try karo. (Wrong CAPTCHA. Attempt ${captchaAttempts + 1} of 3. Hint: It's definitely not what you think it is.)`,
+        `Arre bhai! Server couldn't verify. Try again. (Attempt 1/4)`,
       );
-      setCaptchaAttempts((prev) => prev + 1);
+      setCaptchaAttempts(1);
       setCaptchaInput("");
       return;
     }
 
-    // STEP B: Data wipe (fires once)
-    if (captchaAttempts >= 3 && !hasWiped) {
-      gsap.to("body", {
-        backgroundColor: "#ffffff",
-        duration: 0.1,
-        yoyo: true,
-        repeat: 3,
-      });
-      setShowWipeOverlay(true);
-      setTimeout(() => {
-        setShowWipeOverlay(false);
-        // Reset all form fields
-        setFullName("");
-        setGender(null);
-        setFatherName("");
-        setMotherName("");
-        setMobileNumber("");
-        setRefNumber("");
-        setDobDay("");
-        setDobMonth("");
-        setDobYear("");
-        setCaptchaAttempts(0);
-        setCaptchaInput("");
-        setCaptchaError("");
-        setHasWiped(true);
-        setComplainContext("wipe");
-      }, 4000);
+    // CAPTCHA ATTEMPT 2: Always wrong + confusing hint
+    if (captchaAttempts === 1) {
+      setCaptchaError(
+        `Galat! (Attempt 2/4). Hint: Read each character carefully. Case sensitive maybe? (Spoiler: it's not case sensitive. Or is it? Who knows.)`,
+      );
+      setCaptchaAttempts(2);
+      setCaptchaInput("");
       return;
     }
 
-    // STEP C: Finally proceed (only if captcha attempts are 3+ and wiped, AND the captcha input is exactly the correct key)
-    if (captchaAttempts >= 3 && hasWiped) {
-      if (captchaInput !== "B3Ql9X") {
-        setCaptchaError(
-          "Arre bhai! CAPTCHA galat hai! (Wrong CAPTCHA. Hint: It's ALWAYS the original code, regardless of what visual lie is shown.)",
-        );
-        setCaptchaInput("");
+    // CAPTCHA ATTEMPT 3: Always wrong
+    if (captchaAttempts === 2) {
+      setCaptchaError(
+        `STILL WRONG! (Attempt 3/4). Ek aur try. Aap kar sakte ho.`,
+      );
+      setCaptchaAttempts(3);
+      setCaptchaInput("");
+      return;
+    }
+
+    // CAPTCHA ATTEMPT 4: ALWAYS PASSES (regardless of input)
+    if (captchaAttempts === 3) {
+      setCaptchaError("");
+      setCaptchaSuccess("✓ CAPTCHA Verified (We gave up checking. Welcome.)");
+      setCaptchaAttempts(4);
+
+      // Now check if data wipe needs to happen
+      if (!hasWiped) {
+        // Trigger data wipe
+        setTimeout(() => {
+          gsap.to("body", {
+            backgroundColor: "#ffffff",
+            duration: 0.1,
+            yoyo: true,
+            repeat: 3,
+          });
+          setShowWipeOverlay(true);
+          setTimeout(() => {
+            setShowWipeOverlay(false);
+            setFullName("");
+            setGender(null);
+            setFatherName("");
+            setMotherName("");
+            setMobileNumber("");
+            setRefNumber("");
+            setDobDay("");
+            setDobMonth("");
+            setDobYear("");
+            setCaptchaAttempts(0);
+            setCaptchaInput("");
+            setCaptchaError("");
+            setCaptchaSuccess("");
+            setHasWiped(true);
+            setComplainContext("wipe");
+          }, 4000);
+        }, 800);
+        return;
+      }
+
+      // Already wiped — proceed
+      setTimeout(() => setCurrentStep(2), 600);
+      return;
+    }
+
+    // captchaAttempts >= 4 means already passed — proceed
+    if (captchaAttempts >= 4) {
+      if (!hasWiped) {
+        gsap.to("body", {
+          backgroundColor: "#ffffff",
+          duration: 0.1,
+          yoyo: true,
+          repeat: 3,
+        });
+        setShowWipeOverlay(true);
+        setTimeout(() => {
+          setShowWipeOverlay(false);
+          setFullName("");
+          setGender(null);
+          setFatherName("");
+          setMotherName("");
+          setMobileNumber("");
+          setRefNumber("");
+          setDobDay("");
+          setDobMonth("");
+          setDobYear("");
+          setCaptchaAttempts(0);
+          setCaptchaInput("");
+          setCaptchaError("");
+          setCaptchaSuccess("");
+          setHasWiped(true);
+          setComplainContext("wipe");
+        }, 4000);
         return;
       }
       setCurrentStep(2);
@@ -234,18 +289,8 @@ export default function Screen1({
               >
                 <option value="">--</option>
                 {[
-                  "January",
-                  "February",
-                  "March",
-                  "April",
-                  "May",
-                  "June",
-                  "July",
-                  "August",
-                  "September",
-                  "October",
-                  "November",
-                  "December",
+                  "January","February","March","April","May","June",
+                  "July","August","September","October","November","December",
                 ].map((m, i) => (
                   <option key={i} value={m}>
                     {m}
@@ -365,33 +410,39 @@ export default function Screen1({
             (Compulsory / Zaroori) 🔐
           </label>
 
+          {/* CAPTCHA display with per-character distortion */}
           <div
             style={{
               position: "relative",
-              background: "#eee",
+              background: "repeating-linear-gradient(45deg, #eee, #eee 5px, #ddd 5px, #ddd 10px)",
               padding: "8px 16px",
               fontSize: 22,
               fontFamily: "'Courier New', monospace",
               fontWeight: "bold",
-              letterSpacing: 6,
+              letterSpacing: 8,
               color: "#111",
-              filter: "blur(1.5px)",
-              transform: "rotate(-3deg)",
+              filter: "blur(2px) contrast(1.5)",
+              transform: "rotate(-5deg) skewX(-8deg)",
               border: "2px solid #999",
               margin: "8px 0",
               display: "inline-block",
               overflow: "hidden",
-              minWidth: 160,
+              minWidth: 200,
             }}
           >
-            {CAPTCHA_DISPLAYS[captchaDisplayIdx]}
-            {/* Noise lines */}
+            {CAPTCHA_ANSWER.split('').map((char, i) => (
+              <span key={i} style={{
+                display: 'inline-block',
+                transform: `rotate(${charRotations[i]}deg)`,
+              }}>{char}</span>
+            ))}
+            {/* 7 Noise lines */}
             {NOISE_ANGLES.map((angle, i) => (
               <div
                 key={i}
                 className="captcha-noise-line"
                 style={{
-                  top: `${15 + i * 18}%`,
+                  top: `${10 + i * 14}%`,
                   transform: `rotate(${angle}deg)`,
                 }}
               />
@@ -402,11 +453,11 @@ export default function Screen1({
             <button
               className="govt-btn-grey"
               style={{ fontSize: 11 }}
-              onClick={() =>
-                setCaptchaDisplayIdx(
-                  (captchaDisplayIdx + 1) % CAPTCHA_DISPLAYS.length,
-                )
-              }
+              onClick={() => {
+                // "Refresh" — just re-renders with same code but different visual rotations
+                setCaptchaInput("");
+                setCaptchaError("");
+              }}
             >
               Refresh CAPTCHA 🔄
             </button>
@@ -430,6 +481,25 @@ export default function Screen1({
               }}
             >
               {captchaError}
+            </div>
+          )}
+
+          {captchaSuccess && (
+            <div
+              style={{
+                color: "#28a745",
+                fontSize: 11,
+                marginTop: 4,
+                fontWeight: "bold",
+              }}
+            >
+              {captchaSuccess}
+            </div>
+          )}
+
+          {captchaAttempts >= 2 && (
+            <div style={{ color: "#888", fontSize: 10, marginTop: 4 }}>
+              Tip: Type exactly what you see. Spaces nahi chahiye.
             </div>
           )}
         </div>

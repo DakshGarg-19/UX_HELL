@@ -40,6 +40,7 @@ export default function Screen4({ fullName, fatherName, selectedAddress, onReset
   useEffect(() => {
     if (phase === 2) {
       try { new Audio('/audio/dhoom.mp3').play().catch(() => {}); } catch (e) {}
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [phase]);
 
@@ -73,6 +74,11 @@ export default function Screen4({ fullName, fatherName, selectedAddress, onReset
 
   // Phase 2: Death Certificate
   return (
+    <div style={{
+      maxHeight: 'calc(100vh - 200px)',
+      overflowY: 'auto',
+      paddingBottom: '32px'
+    }}>
     <div style={{ padding: 12 }}>
       {/* Certificate */}
       <div style={{ border: '10px double #8B4513', padding: 8, background: 'white', maxWidth: 700, margin: '0 auto' }}>
@@ -156,6 +162,7 @@ export default function Screen4({ fullName, fatherName, selectedAddress, onReset
         onClick={onReset}>
         🔄 Apply Again (Main character energy)
       </button>
+    </div>
     </div>
   );
 }
