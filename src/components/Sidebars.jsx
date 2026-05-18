@@ -1,8 +1,27 @@
 import React from 'react';
 
-export function LeftSidebar() {
+export function LeftSidebar({ waitYears, waitMonths, waitDays }) {
+
   return (
     <div style={{ width: 200, minWidth: 200, padding: 6 }}>
+      {/* Token & Wait Time Widget */}
+      <div style={{ border: '1px solid #aaa', marginBottom: 16, background: '#f9f9f9' }}>
+        <div style={{ background: '#003366', color: 'white', padding: '6px 10px', fontSize: 14, fontWeight: 'bold' }}>
+          आपकी स्थिति | Current Status
+        </div>
+        <div style={{ padding: 10, fontFamily: 'Courier New, monospace' }}>
+          <div style={{ fontSize: 18, fontWeight: 'bold', borderBottom: '1px dashed #ccc', paddingBottom: 8, marginBottom: 8 }}>
+            Token No: <span style={{ color: '#003366' }}>4,392</span>
+          </div>
+          <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>
+            Estimated Wait Time:
+          </div>
+          <div className="blink-anim" style={{ fontSize: 14, color: '#cc0000', fontWeight: 'bold' }}>
+            {waitYears} Years, {waitMonths} Months, {waitDays} Days
+          </div>
+        </div>
+      </div>
+
       {/* Quick Stats */}
       <div className="sidebar-box">
         <div className="sidebar-box-header">

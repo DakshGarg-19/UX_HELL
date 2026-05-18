@@ -57,6 +57,25 @@ export default function App() {
   const [showFakeLoader, setShowFakeLoader] = useState(false);
   const [showFakeRazorpay, setShowFakeRazorpay] = useState(false);
 
+  // ===== GLOBAL WAIT TIME (shared across Sidebar, Screen3, Complain Modal) =====
+  const [waitYears, setWaitYears] = useState(74);
+  const [waitMonths, setWaitMonths] = useState(3);
+  const [waitDays, setWaitDays] = useState(12);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (Math.random() < 0.2) {
+        setWaitDays(prev => prev + Math.floor(Math.random() * 15) + 5);
+        if (Math.random() < 0.1) setWaitMonths(prev => prev + 1);
+      } else {
+        setWaitDays(prev => prev <= 1 ? 1 : prev - 1);
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const dynamicYear = new Date().getFullYear() + waitYears;
+
   // ===== MODAL STATE =====
   const [navModalOpen, setNavModalOpen] = useState(false);
   const [complainModalOpen, setComplainModalOpen] = useState(false);
@@ -79,8 +98,8 @@ export default function App() {
       gsap.to("#custom-cursor", {
         x: e.clientX - 10,
         y: e.clientY - 10,
-        duration: 0.5,
-        ease: "power1.out"
+        duration: 0.9,
+        ease: "power2.out"
       });
     };
     window.addEventListener('mousemove', handleMouseMove);
@@ -214,7 +233,7 @@ export default function App() {
         };
       case 'bribe': {
         const buttons = [
-          { label: 'Main 2154 tak wait karunga 😮‍💨', action: () => setComplainModalOpen(false) },
+          { label: `Main ${dynamicYear} tak wait karunga 😮‍💨`, action: () => setComplainModalOpen(false) },
           {
             label: "Please sir it's urgent! 🙏", action: () => {
               setComplainModalOpen(false);
@@ -268,6 +287,7 @@ export default function App() {
           setComplainShaking={setComplainShaking}
           setComplainContext={setComplainContext}
           setShowBribeToast={setShowBribeToast}
+          dynamicYear={dynamicYear}
         />
       );
     }
@@ -316,12 +336,14 @@ export default function App() {
           setShowFakeLoader={setShowFakeLoader}
           showFakeLoader={showFakeLoader}
           setShowFakeRazorpay={setShowFakeRazorpay}
+          waitYears={waitYears} waitMonths={waitMonths} waitDays={waitDays} dynamicYear={dynamicYear}
         />
       );
       case 4: return (
         <Screen4
           fullName={fullName} fatherName={fatherName}
           selectedAddress={selectedAddress} onReset={handleReset}
+          dynamicYear={dynamicYear}
         />
       );
       default: return <Screen0 setCurrentStep={setCurrentStep} />;
@@ -361,7 +383,7 @@ export default function App() {
 
       {/* 3-Column Layout */}
       <div style={{ display: 'flex', minHeight: 'calc(100vh - 200px)' }}>
-        <LeftSidebar />
+        <LeftSidebar waitYears={waitYears} waitMonths={waitMonths} waitDays={waitDays} />
         <div style={{ flex: 1, borderLeft: '1px solid #ccc', borderRight: '1px solid #ccc', background: '#fff', minWidth: 0 }}>
           {renderContent()}
         </div>

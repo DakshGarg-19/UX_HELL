@@ -13,7 +13,7 @@ const LOG_MESSAGES = [
   "✓ APPLICATION SOMEHOW APPROVED. God knows how."
 ];
 
-export default function Screen4({ fullName, fatherName, selectedAddress, onReset }) {
+export default function Screen4({ fullName, fatherName, selectedAddress, onReset, dynamicYear }) {
   const [phase, setPhase] = useState(1);
   const [logs, setLogs] = useState([]);
   const progressRef = useRef(null);
@@ -140,7 +140,7 @@ export default function Screen4({ fullName, fatherName, selectedAddress, onReset
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               textAlign: 'center', fontSize: 9, color: 'red', fontWeight: 'bold', lineHeight: 1.4
             }}>
-              GOVT OF INDIA<br />VERIFIED<br />⭐ 2154 ⭐<br />OFFICIAL
+              GOVT OF INDIA<br />VERIFIED<br />⭐ {dynamicYear} ⭐<br />OFFICIAL
             </div>
           </div>
         </div>

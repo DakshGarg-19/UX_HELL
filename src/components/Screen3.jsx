@@ -6,7 +6,8 @@ export default function Screen3({
   setCurrentStep,
   setComplainShaking, setComplainContext,
   setShowBribeToast, setShowFakeLoader, showFakeLoader,
-  setShowFakeRazorpay
+  setShowFakeRazorpay,
+  waitYears, waitMonths, waitDays, dynamicYear
 }) {
   const approveButtonRef = useRef(null);
 
@@ -82,7 +83,7 @@ export default function Screen3({
         {/* Approval Date */}
         <div style={{ background: '#ffe0e0', border: '2px solid #cc0000', padding: 12, marginBottom: 16 }}>
           <div style={{ fontSize: 12 }}>🗓 अनुमानित अनुमोदन तिथि: (Anumaanit Anumodan Tithi — Estimated Approval Date)</div>
-          <div style={{ fontWeight: 'bold', color: '#cc0000', fontSize: 22, fontFamily: 'Georgia, serif' }}>14th August, 2154</div>
+          <div style={{ fontWeight: 'bold', color: '#cc0000', fontSize: 22, fontFamily: 'Georgia, serif' }}>14th August, {dynamicYear}</div>
           <div style={{ color: '#888', fontSize: 11 }}>(Subject to server availability, chai fund status, and whether the processing officer is on leave)</div>
         </div>
 
@@ -93,7 +94,7 @@ export default function Screen3({
         <div style={{ background: '#ece9d8', border: '1px solid #999', padding: 12, marginBottom: 16, fontSize: 13, lineHeight: 1.8 }}>
           For urgent processing, a nominal 'Sahayata Rashi' (Donation/Gift) is required by the processing officer. This is completely voluntary and definitely not a bribe at all 😉.<br /><br />
           <b>Sahayata Rashi Amount: ₹50,000</b><br /><br />
-          Processing Time after Gift: Still 2154, but you'll feel better about it.
+          Processing Time after Gift: Still {dynamicYear}, but you'll feel better about it.
         </div>
 
         {/* Escape Button */}

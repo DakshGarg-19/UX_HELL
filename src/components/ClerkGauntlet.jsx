@@ -15,6 +15,10 @@ function ClerkScreen1({ clerkAnswers, setClerkAnswers, setClerkStep }) {
   const [q6, setQ6] = useState('');
 
   const handleSubmit = () => {
+    if (!q1 || !q2 || !q3 || !q4 || !q5 || !q6) {
+      alert("Verification ke liye saari details bharna zaroori hai! Aadha form submit nahi hota.");
+      return;
+    }
     setClerkAnswers({ ...clerkAnswers, screen1: { q1, q2, q3, q4, q5, q6 } });
     setProcessing(true);
     setTimeout(() => { setProcessing(false); setShowRejection(true); }, 2000);
@@ -155,6 +159,10 @@ function ClerkScreen2({ setClerkStep }) {
   };
 
   const handleSubmit = () => {
+    if (!reason || !metSachiv || !language || !otpInput) {
+      alert("Saari details bhariye Mrs. Kamlavati ke paas submit karne se pehle.");
+      return;
+    }
     setLoadingPhase(1);
     setTimeout(() => setLoadingPhase(2), 1000);
     setTimeout(() => setLoadingPhase(3), 2000);
@@ -277,7 +285,7 @@ function ClerkScreen2({ setClerkStep }) {
 }
 
 // ==================== CLERK SCREEN 3 ====================
-function ClerkScreen3({ fullName, setClerkStep, setCurrentStep, setShowFakeRazorpay, setComplainShaking, setComplainContext, setShowBribeToast }) {
+function ClerkScreen3({ fullName, setClerkStep, setCurrentStep, setShowFakeRazorpay, setComplainShaking, setComplainContext, setShowBribeToast, dynamicYear }) {
   const [showSuspiciousModal, setShowSuspiciousModal] = useState(false);
   const bribeButtonRef = useRef(null);
 
@@ -373,7 +381,7 @@ function ClerkScreen3({ fullName, setClerkStep, setCurrentStep, setShowFakeRazor
               }}
             >
               💰 Pay Vishesh Shulk (₹50,000)
-              <div style={{ fontSize: 9, fontWeight: 'normal', fontStyle: 'italic' }}>(Abhi de do. Warna 2154 tak wait karo.)</div>
+              <div style={{ fontSize: 9, fontWeight: 'normal', fontStyle: 'italic' }}>(Abhi de do. Warna {dynamicYear} tak wait karo.)</div>
             </button>
           </div>
 
@@ -408,7 +416,7 @@ function ClerkScreen3({ fullName, setClerkStep, setCurrentStep, setShowFakeRazor
 export default function ClerkGauntlet({
   clerkStep, setClerkStep, clerkAnswers, setClerkAnswers,
   fullName, setCurrentStep,
-  setShowFakeRazorpay, setComplainShaking, setComplainContext, setShowBribeToast
+  setShowFakeRazorpay, setComplainShaking, setComplainContext, setShowBribeToast, dynamicYear
 }) {
   if (clerkStep === 1) {
     return <ClerkScreen1 clerkAnswers={clerkAnswers} setClerkAnswers={setClerkAnswers} setClerkStep={setClerkStep} />;
@@ -425,6 +433,7 @@ export default function ClerkGauntlet({
       setComplainShaking={setComplainShaking}
       setComplainContext={setComplainContext}
       setShowBribeToast={setShowBribeToast}
+      dynamicYear={dynamicYear}
     />;
   }
   return null;

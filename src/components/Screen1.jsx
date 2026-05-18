@@ -92,6 +92,14 @@ export default function Screen1({
 
   // ── NEXT button handler ──
   const handleNext = () => {
+    if (!fullName || !refNumber || !dobDay || !dobMonth || !dobYear || !gender || !fatherName || !motherName || !mobileNumber) {
+      alert("Saare (All) * fields bharna zaroori hai! (Mandatory fields missing)");
+      return;
+    }
+    if (mobileError) {
+      alert("Mobile number theek karo pehle! (Fix the mobile number format)");
+      return;
+    }
     // Delegate to CAPTCHA validation first — it returns true if it's handling things
     if (captchaHook.validate()) return;
   };
